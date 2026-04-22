@@ -1,261 +1,157 @@
 """
-Tick Node — Analog Clock Application.
+Tick Node — Analog Clock Desktop Application.
 
-Entry point for the Streamlit frontend.
-Configures session state, renders the Plotly clock face,
-and provides controls for timezone travel, brand selection,
-and the Time Machine.
-
-Run with:
-    streamlit run app.py
+Phase 6: CustomTkinter High-Performance Desktop App.
+Combines the backend Circular Doubly Linked Lists with a smooth
+60FPS trigonometry-based Canvas renderer.
 """
 
-import streamlit as st
-from streamlit_autorefresh import st_autorefresh
+import time
+import customtkinter as ctk
 
 from src.use_cases.clock_manager import ClockManager
 from src.use_cases.history import HistoryStack
-from src.use_cases.strategies import ForwardStrategy, BackwardStrategy
-from src.infrastructure.static_data import WATCH_BRANDS, TIME_ZONES, ALL_TIME_ZONES
+from src.infrastructure.static_data import WATCH_BRANDS, ALL_TIME_ZONES
 from src.infrastructure.time_service import TimeCalculator
-from src.ui.watch_faces import WatchFaceFactory
+from src.ui.clock_canvas import HighResClockCanvas
+from src.ui.control_panel import ControlPanel
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Page Configuration
+# Application Setup
 # ═══════════════════════════════════════════════════════════════════════════
 
-st.set_page_config(
-    page_title="Tick Node — Reloj Analógico",
-    page_icon="🕐",
-    layout="centered",
-    initial_sidebar_state="expanded",
-)
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Session State Initialization (runs only once per session)
-# ═══════════════════════════════════════════════════════════════════════════
+class TickNodeApp(ctk.CTk):
+    """
+    Main application window wrapping backend and UI components.
+    Runs a 60FPS render loop alongside a 1Hz logical tick loop.
+    """
 
-if "clock" not in st.session_state:
-    st.session_state.clock = ClockManager()
+    def __init__(self) -> None:
+        super().__init__()
+        
+        self.title("Tick Node — Reloj Analógico")
+        self.geometry("900x600")
+        self.minsize(800, 500)
+        
+        # Grid layout: 1 row, 2 columns (Sidebar, Canvas)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        
+        # ── Backend Initialization ──
+        self.clock = ClockManager()
+        self.history = HistoryStack()
+        self.calc = TimeCalculator()
+        
+        # ── State Tracking ──
+        self.current_zone = self.calc.get_local_zone_name()
+        if self.current_zone not in ALL_TIME_ZONES:
+            self.current_zone = ALL_TIME_ZONES[0]
+            
+        self.brand_map = {v["display_name"]: k for k, v in WATCH_BRANDS.items()}
+        self.current_brand_key = list(WATCH_BRANDS.keys())[0]
+        
+        # Timing variables for smooth sweep
+        self.last_tick_time = time.time()
+        
+        # ── UI Setup ──
+        self._setup_ui()
+        
+        # ── Start Engines ──
+        self.auto_tick()
+        self.update_display()
 
-if "history" not in st.session_state:
-    st.session_state.history = HistoryStack()
-
-if "brand_key" not in st.session_state:
-    st.session_state.brand_key = "rolex"
-
-if "current_zone" not in st.session_state:
-    calc = TimeCalculator()
-    st.session_state.current_zone = calc.get_local_zone_name()
-
-if "time_machine_on" not in st.session_state:
-    st.session_state.time_machine_on = False
-
-if "auto_tick" not in st.session_state:
-    st.session_state.auto_tick = False
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Aliases for readability
-# ═══════════════════════════════════════════════════════════════════════════
-
-clock: ClockManager = st.session_state.clock
-history: HistoryStack = st.session_state.history
-calc = TimeCalculator()
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Auto-refresh tick (if enabled)
-# ═══════════════════════════════════════════════════════════════════════════
-
-if st.session_state.auto_tick:
-    st_autorefresh(interval=1000, limit=None, key="auto_tick_refresh")
-    clock.tick()
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Sidebar — Controls
-# ═══════════════════════════════════════════════════════════════════════════
-
-with st.sidebar:
-    st.markdown("## 🎛️ Panel de Control")
-    st.markdown("---")
-
-    # ── Brand Selector ──────────────────────────────────────────────── #
-    st.markdown("### 🏷️ Marca de Lujo")
-    brand_options = {v["display_name"]: k for k, v in WATCH_BRANDS.items()}
-    selected_display = st.selectbox(
-        "Elegir marca",
-        options=list(brand_options.keys()),
-        index=list(brand_options.values()).index(st.session_state.brand_key),
-        label_visibility="collapsed",
-    )
-    st.session_state.brand_key = brand_options[selected_display]
-
-    st.markdown("---")
-
-    # ── Timezone Selector ───────────────────────────────────────────── #
-    st.markdown("### 🌍 Zona Horaria")
-
-    # Build a flat list with continent headers
-    tz_flat_options = []
-    for continent, zones in TIME_ZONES.items():
-        for tz in zones:
-            tz_flat_options.append(tz)
-
-    current_idx = (
-        tz_flat_options.index(st.session_state.current_zone)
-        if st.session_state.current_zone in tz_flat_options
-        else 0
-    )
-
-    selected_zone = st.selectbox(
-        "Elegir zona",
-        options=tz_flat_options,
-        index=current_idx,
-        label_visibility="collapsed",
-    )
-
-    if selected_zone != st.session_state.current_zone:
-        diff = calc.hour_difference(
-            destination=selected_zone,
-            origin=st.session_state.current_zone,
+    def _setup_ui(self) -> None:
+        """Instantiate sidebar and main canvas."""
+        # Sidebar
+        brands_display = list(self.brand_map.keys())
+        self.control_panel = ControlPanel(
+            self,
+            brands=brands_display,
+            zones=ALL_TIME_ZONES,
+            on_brand_change=self.handle_brand_change,
+            on_zone_change=self.handle_zone_change,
+            on_undo=self.handle_undo,
+            on_time_machine_toggle=self.handle_time_machine,
+            width=250
         )
-        # Push to history before shifting
-        history.push({
-            "from": st.session_state.current_zone,
-            "to": selected_zone,
-            "diff": diff,
+        self.control_panel.grid(row=0, column=0, sticky="nsew")
+        
+        # Set initial visual states
+        self.control_panel.set_active_brand(WATCH_BRANDS[self.current_brand_key]["display_name"])
+        self.control_panel.set_active_zone(self.current_zone)
+        
+        # Main Canvas Area
+        self.canvas_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
+        self.canvas_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
+        
+        # The CTk Dark mode background is roughly #242424
+        self.clock_canvas = HighResClockCanvas(
+            self.canvas_frame, 
+            width=500, height=500, 
+            bg="#242424"
+        )
+        self.clock_canvas.place(relx=0.5, rely=0.5, anchor="center")
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Callbacks
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def handle_brand_change(self, display_name: str) -> None:
+        self.current_brand_key = self.brand_map[display_name]
+
+    def handle_zone_change(self, zone: str) -> None:
+        if zone == self.current_zone:
+            return
+            
+        diff = self.calc.hour_difference(destination=zone, origin=self.current_zone)
+        self.history.push({
+            "from": self.current_zone,
+            "to": zone,
+            "diff": diff
         })
-        clock.shift_time_zone(diff)
-        st.session_state.current_zone = selected_zone
-        st.rerun()
+        self.clock.shift_time_zone(diff)
+        self.current_zone = zone
 
-    # ── Undo Travel Button ──────────────────────────────────────────── #
-    st.markdown("---")
-    st.markdown("### ✈️ Historial de Viajes")
+    def handle_undo(self) -> None:
+        if not self.history.is_empty():
+            record = self.history.pop()
+            self.clock.shift_time_zone(-record["diff"])
+            self.current_zone = record["from"]
+            self.control_panel.set_active_zone(self.current_zone)
 
-    if not history.is_empty():
-        last = history.peek()
-        st.caption(
-            f"Último viaje: {last['from']} → {last['to']} "
-            f"({'+' if last['diff'] >= 0 else ''}{last['diff']}h)"
-        )
-    else:
-        st.caption("Sin viajes registrados.")
+    def handle_time_machine(self) -> None:
+        self.clock.toggle_time_machine()
 
-    undo_disabled = history.is_empty()
-    if st.button(
-        "⏪ Deshacer Viaje",
-        disabled=undo_disabled,
-        use_container_width=True,
-    ):
-        record = history.pop()
-        clock.shift_time_zone(-record["diff"])
-        st.session_state.current_zone = record["from"]
-        st.rerun()
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Game Loops
+    # ═══════════════════════════════════════════════════════════════════════════
 
-    st.markdown(f"📚 Pila: **{len(history)}** viaje(s)")
+    def auto_tick(self) -> None:
+        """1 Hz logical tick for the backend lists."""
+        self.clock.tick()
+        self.last_tick_time = time.time()
+        self.after(1000, self.auto_tick)
 
-    st.markdown("---")
-
-    # ── Time Machine Toggle ─────────────────────────────────────────── #
-    st.markdown("### ⏳ Máquina del Tiempo")
-
-    time_machine = st.toggle(
-        "Invertir tiempo",
-        value=st.session_state.time_machine_on,
-    )
-
-    if time_machine != st.session_state.time_machine_on:
-        st.session_state.time_machine_on = time_machine
-        clock.toggle_time_machine()
-        st.rerun()
-
-    direction = clock.get_state()["direction"]
-    dir_icon = "⏩ Adelante" if direction == "Forward" else "⏪ Atrás"
-    st.caption(f"Dirección: **{dir_icon}**")
-
-    st.markdown("---")
-
-    # ── Tick Controls ───────────────────────────────────────────────── #
-    st.markdown("### ⚡ Motor del Reloj")
-
-    auto = st.toggle(
-        "Tick automático (1s)",
-        value=st.session_state.auto_tick,
-    )
-    if auto != st.session_state.auto_tick:
-        st.session_state.auto_tick = auto
-        st.rerun()
-
-    col_tick1, col_tick2 = st.columns(2)
-    with col_tick1:
-        if st.button("⏱️ Tick ×1", use_container_width=True):
-            clock.tick()
-            st.rerun()
-    with col_tick2:
-        if st.button("⏱️ Tick ×60", use_container_width=True):
-            for _ in range(60):
-                clock.tick()
-            st.rerun()
+    def update_display(self) -> None:
+        """60 FPS render loop for smooth sweeping."""
+        state = self.clock.get_state()
+        brand_config = WATCH_BRANDS[self.current_brand_key]
+        
+        # Calculate fractional second progress (0.0 to 1.0)
+        elapsed = time.time() - self.last_tick_time
+        fractional_second = min(1.0, elapsed)
+        
+        self.clock_canvas.render_clock(state, brand_config, fractional_second)
+        
+        # ~60 FPS (1000ms / 60 ≈ 16ms)
+        self.after(16, self.update_display)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Main Area — Clock Face
-# ═══════════════════════════════════════════════════════════════════════════
-
-# Header
-st.markdown(
-    "<h1 style='text-align:center; margin-bottom:0;'>"
-    "🕐 Tick Node"
-    "</h1>"
-    "<p style='text-align:center; color:gray; margin-top:0;'>"
-    "Reloj Analógico con Listas Circulares Dobles"
-    "</p>",
-    unsafe_allow_html=True,
-)
-
-# Get current state and brand config
-state = clock.get_state()
-brand_cfg = WATCH_BRANDS[st.session_state.brand_key]
-
-# Build the Plotly figure via Factory
-fig = WatchFaceFactory.create_watch_face(state=state, brand_config=brand_cfg)
-
-# Render
-st.plotly_chart(fig, use_container_width=False, config={"displayModeBar": False})
-
-# Digital readout below the clock
-h, m, s = state["hours"], state["minutes"], state["seconds"]
-st.markdown(
-    f"<div style='text-align:center; font-size:2rem; font-family:monospace; "
-    f"letter-spacing:4px; color:{brand_cfg['accent']};'>"
-    f"{h:02d} : {m:02d} : {s:02d}"
-    f"</div>",
-    unsafe_allow_html=True,
-)
-
-# Zone info
-st.markdown(
-    f"<p style='text-align:center; color:gray; font-size:0.9rem;'>"
-    f"🌐 {st.session_state.current_zone}"
-    f"</p>",
-    unsafe_allow_html=True,
-)
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Footer
-# ═══════════════════════════════════════════════════════════════════════════
-
-st.markdown("---")
-st.markdown(
-    "<p style='text-align:center; color:gray; font-size:0.75rem;'>"
-    "Tick Node · Clean Architecture · Listas Circulares Dobles · "
-    "Patrones GoF (Strategy, Factory, Observer) · Pila LIFO"
-    "</p>",
-    unsafe_allow_html=True,
-)
+if __name__ == "__main__":
+    app = TickNodeApp()
+    app.mainloop()

@@ -1,4 +1,2 @@
-streamlit
-plotly
+customtkinter
 tzdata
-streamlit-autorefresh
