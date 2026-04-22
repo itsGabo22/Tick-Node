@@ -91,46 +91,34 @@ WATCH_BRANDS: Dict[str, Dict[str, Any]] = {
 # however it prefers (dropdown, grouped selectbox, etc.).
 # ═══════════════════════════════════════════════════════════════════════════
 
-TIME_ZONES: Dict[str, List[str]] = {
-    "América": [
-        "America/New_York",
-        "America/Chicago",
-        "America/Denver",
-        "America/Los_Angeles",
-        "America/Bogota",
-        "America/Mexico_City",
-        "America/Sao_Paulo",
-        "America/Argentina/Buenos_Aires",
-        "America/Toronto",
-    ],
-    "Europa": [
-        "Europe/London",
-        "Europe/Paris",
-        "Europe/Berlin",
-        "Europe/Madrid",
-        "Europe/Rome",
-        "Europe/Moscow",
-    ],
-    "Asia": [
-        "Asia/Tokyo",
-        "Asia/Shanghai",
-        "Asia/Dubai",
-        "Asia/Kolkata",
-        "Asia/Seoul",
-        "Asia/Singapore",
-    ],
-    "Oceanía": [
-        "Australia/Sydney",
-        "Pacific/Auckland",
-    ],
-    "África": [
-        "Africa/Cairo",
-        "Africa/Lagos",
-        "Africa/Johannesburg",
-    ],
+TIME_ZONES: Dict[str, Dict[str, str]] = {
+    "America/New_York": {"flag": "🇺🇸", "name": "Nueva York"},
+    "America/Chicago": {"flag": "🇺🇸", "name": "Chicago"},
+    "America/Denver": {"flag": "🇺🇸", "name": "Denver"},
+    "America/Los_Angeles": {"flag": "🇺🇸", "name": "Los Ángeles"},
+    "America/Bogota": {"flag": "🇨🇴", "name": "Bogotá"},
+    "America/Mexico_City": {"flag": "🇲🇽", "name": "Ciudad de México"},
+    "America/Sao_Paulo": {"flag": "🇧🇷", "name": "São Paulo"},
+    "America/Argentina/Buenos_Aires": {"flag": "🇦🇷", "name": "Buenos Aires"},
+    "America/Toronto": {"flag": "🇨🇦", "name": "Toronto"},
+    "Europe/London": {"flag": "🇬🇧", "name": "Londres"},
+    "Europe/Paris": {"flag": "🇫🇷", "name": "París"},
+    "Europe/Berlin": {"flag": "🇩🇪", "name": "Berlín"},
+    "Europe/Madrid": {"flag": "🇪🇸", "name": "Madrid"},
+    "Europe/Rome": {"flag": "🇮🇹", "name": "Roma"},
+    "Europe/Moscow": {"flag": "🇷🇺", "name": "Moscú"},
+    "Asia/Tokyo": {"flag": "🇯🇵", "name": "Tokio"},
+    "Asia/Shanghai": {"flag": "🇨🇳", "name": "Shanghái"},
+    "Asia/Dubai": {"flag": "🇦🇪", "name": "Dubái"},
+    "Asia/Kolkata": {"flag": "🇮🇳", "name": "Calcuta"},
+    "Asia/Seoul": {"flag": "🇰🇷", "name": "Seúl"},
+    "Asia/Singapore": {"flag": "🇸🇬", "name": "Singapur"},
+    "Australia/Sydney": {"flag": "🇦🇺", "name": "Sídney"},
+    "Pacific/Auckland": {"flag": "🇳🇿", "name": "Auckland"},
+    "Africa/Cairo": {"flag": "🇪🇬", "name": "El Cairo"},
+    "Africa/Lagos": {"flag": "🇳🇬", "name": "Lagos"},
+    "Africa/Johannesburg": {"flag": "🇿🇦", "name": "Johannesburgo"},
 }
 
 # Flat list for quick iteration / validation
-ALL_TIME_ZONES: List[str] = [
-    tz for zones in TIME_ZONES.values() for tz in zones
-]
+ALL_TIME_ZONES: List[str] = list(TIME_ZONES.keys())

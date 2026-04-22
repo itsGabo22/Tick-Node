@@ -155,8 +155,8 @@ def test_time_zones_not_empty():
 
 
 def test_all_time_zones_matches_grouped():
-    """ALL_TIME_ZONES must be the flat union of TIME_ZONES values."""
-    flat = [tz for zones in TIME_ZONES.values() for tz in zones]
+    """ALL_TIME_ZONES must be the flat union of TIME_ZONES keys."""
+    flat = list(TIME_ZONES.keys())
     assert ALL_TIME_ZONES == flat
 
 

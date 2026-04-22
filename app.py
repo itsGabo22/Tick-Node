@@ -92,32 +92,16 @@ class TickNodeApp(ctk.CTk):
         
         # Main Canvas Area
         self.canvas_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.canvas_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
+        self.canvas_frame.grid(row=0, column=1, sticky="nsew")
         
-        # Center the canvas and labels
         self.canvas_frame.grid_rowconfigure(0, weight=1)
-        self.canvas_frame.grid_rowconfigure(4, weight=1)
         self.canvas_frame.grid_columnconfigure(0, weight=1)
 
-        # Brand Label
-        self.lbl_brand_display = ctk.CTkLabel(
-            self.canvas_frame, text="", font=ctk.CTkFont(size=28, weight="bold")
-        )
-        self.lbl_brand_display.grid(row=1, column=0, pady=(0, 20))
-
-        # The CTk Dark mode background is roughly #242424
         self.clock_canvas = HighResClockCanvas(
             self.canvas_frame, 
-            width=500, height=500, 
             bg="#242424"
         )
-        self.clock_canvas.grid(row=2, column=0)
-
-        # Digital Time Label
-        self.lbl_digital_time = ctk.CTkLabel(
-            self.canvas_frame, text="", font=ctk.CTkFont(family="Courier", size=36, weight="bold")
-        )
-        self.lbl_digital_time.grid(row=3, column=0, pady=(20, 0))
+        self.clock_canvas.grid(row=0, column=0, sticky="nsew")
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Callbacks
@@ -198,21 +182,21 @@ class TickNodeApp(ctk.CTk):
         elapsed = time.time() - self.last_tick_time
         fractional_second = min(1.0, elapsed)
         
-        self.clock_canvas.render_clock(state, brand_config, fractional_second)
-        
-        # Update extra UI labels to accompany the clock
-        self.lbl_brand_display.configure(
-            text=brand_config["display_name"],
-            text_color=("gray10", "gray90")
-        )
+        virtual_hour = self.virtual_datetime.hour
         
         am_pm = self.virtual_datetime.strftime("%p")
         time_str = f"{state['hours']:02d}:{state['minutes']:02d}:{state['seconds']:02d} {am_pm}"
         if state["direction"] == "Backward":
             time_str += " ⏪"
-        self.lbl_digital_time.configure(
-            text=time_str,
-            text_color=("gray10", "gray90")
+            
+        from src.infrastructure.static_data import TIME_ZONES
+        tz_info = TIME_ZONES.get(self.current_zone, {"flag": "🌐", "name": self.current_zone})
+        date_str, rel_day = self.calc.get_travel_date_info(self.current_zone)
+        travel_str = f"{tz_info['flag']} {tz_info['name']} | {date_str} ({rel_day})"
+        
+        self.clock_canvas.render_clock(
+            state, brand_config, fractional_second, 
+            virtual_hour, time_str, travel_str
         )
         
         # ~60 FPS (1000ms / 60 ≈ 16ms)

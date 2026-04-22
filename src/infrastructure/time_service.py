@@ -122,3 +122,34 @@ class TimeCalculator:
         if zone_name is None:
             zone_name = self.get_local_zone_name()
         return datetime.now(ZoneInfo(zone_name))
+
+    def get_travel_date_info(self, destination: str, origin: str | None = None) -> tuple[str, str]:
+        """
+        Return a formatted string Date and a relative day tag (Hoy, Mañana, Ayer).
+        """
+        if origin is None:
+            origin = self.get_local_zone_name()
+            
+        local_time = self.get_current_time(origin)
+        dest_time = self.get_current_time(destination)
+        
+        local_date = local_time.date()
+        dest_date = dest_time.date()
+        
+        if dest_date > local_date:
+            relative_day = "Mañana"
+        elif dest_date < local_date:
+            relative_day = "Ayer"
+        else:
+            relative_day = "Hoy"
+            
+        months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+        weekdays = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        
+        day_name = weekdays[dest_time.weekday()]
+        month_name = months[dest_time.month - 1]
+        
+        date_str = f"{day_name}, {dest_time.day} de {month_name}"
+        
+        return date_str, relative_day
