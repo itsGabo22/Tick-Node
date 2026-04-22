@@ -1,3 +1,4 @@
 streamlit
 plotly
 tzdata
+streamlit-autorefresh
