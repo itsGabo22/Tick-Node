@@ -43,7 +43,7 @@ class ControlPanel(ctk.CTkFrame):
             font=ctk.CTkFont(size=14, weight="bold")
         )
         self.lbl_brand.grid(row=1, column=0, padx=20, pady=(10, 0), sticky="w")
-        self.help_brand = ctk.CTkLabel(self, text="Cambia el estilo visual (Factory).", font=ctk.CTkFont(size=11), text_color="gray")
+        self.help_brand = ctk.CTkLabel(self, text="Cambia el estilo visual (Factory).", font=ctk.CTkFont(size=11), text_color=("gray40", "gray60"))
         self.help_brand.grid(row=2, column=0, padx=20, pady=(0, 5), sticky="w")
 
         self.opt_brand = ctk.CTkOptionMenu(
@@ -60,7 +60,7 @@ class ControlPanel(ctk.CTkFrame):
             font=ctk.CTkFont(size=14, weight="bold")
         )
         self.lbl_zone.grid(row=4, column=0, padx=20, pady=(10, 0), sticky="w")
-        self.help_zone = ctk.CTkLabel(self, text="Viaja por el mundo. Guarda en Pila.", font=ctk.CTkFont(size=11), text_color="gray")
+        self.help_zone = ctk.CTkLabel(self, text="Viaja por el mundo. Guarda en Pila.", font=ctk.CTkFont(size=11), text_color=("gray40", "gray60"))
         self.help_zone.grid(row=5, column=0, padx=20, pady=(0, 5), sticky="w")
 
         self.opt_zone = ctk.CTkOptionMenu(
@@ -81,7 +81,7 @@ class ControlPanel(ctk.CTkFrame):
             text_color=("gray10", "#DCE4EE")
         )
         self.btn_undo.grid(row=7, column=0, padx=20, pady=(10, 0), sticky="ew")
-        self.help_undo = ctk.CTkLabel(self, text="Extrae de la Pila y vuelve a tiempo real.", font=ctk.CTkFont(size=11), text_color="gray")
+        self.help_undo = ctk.CTkLabel(self, text="Extrae de la Pila y vuelve a tiempo real.", font=ctk.CTkFont(size=11), text_color=("gray40", "gray60"))
         self.help_undo.grid(row=8, column=0, padx=20, pady=(0, 20), sticky="w")
 
         # ── Time Machine Switch ──
@@ -92,7 +92,7 @@ class ControlPanel(ctk.CTkFrame):
             font=ctk.CTkFont(size=12, weight="bold")
         )
         self.switch_time_machine.grid(row=9, column=0, padx=20, pady=(10, 0), sticky="w")
-        self.help_time = ctk.CTkLabel(self, text="Invierte las listas (Strategy).", font=ctk.CTkFont(size=11), text_color="gray")
+        self.help_time = ctk.CTkLabel(self, text="Invierte las listas (Strategy).", font=ctk.CTkFont(size=11), text_color=("gray40", "gray60"))
         self.help_time.grid(row=10, column=0, padx=20, pady=(0, 20), sticky="w")
         
         self.grid_rowconfigure(11, weight=1)  # Spacer

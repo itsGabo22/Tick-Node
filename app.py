@@ -8,6 +8,7 @@ Combines the backend Circular Doubly Linked Lists with a smooth
 
 import time
 import customtkinter as ctk
+from datetime import timedelta
 
 from src.use_cases.clock_manager import ClockManager
 from src.use_cases.history import HistoryStack
@@ -67,6 +68,9 @@ class TickNodeApp(ctk.CTk):
 
     def _setup_ui(self) -> None:
         """Instantiate sidebar and main canvas."""
+        # Tracker for 24-hour AM/PM since ClockManager is purely 12-hour analog
+        self.virtual_datetime = self.calc.get_current_time(self.current_zone)
+
         # Sidebar
         brands_display = list(self.brand_map.keys())
         self.control_panel = ControlPanel(
@@ -77,6 +81,7 @@ class TickNodeApp(ctk.CTk):
             on_zone_change=self.handle_zone_change,
             on_undo=self.handle_undo,
             on_time_machine_toggle=self.handle_time_machine,
+            on_theme_change=self.handle_theme_change,
             width=250
         )
         self.control_panel.grid(row=0, column=0, sticky="nsew")
@@ -89,13 +94,30 @@ class TickNodeApp(ctk.CTk):
         self.canvas_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.canvas_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
         
+        # Center the canvas and labels
+        self.canvas_frame.grid_rowconfigure(0, weight=1)
+        self.canvas_frame.grid_rowconfigure(4, weight=1)
+        self.canvas_frame.grid_columnconfigure(0, weight=1)
+
+        # Brand Label
+        self.lbl_brand_display = ctk.CTkLabel(
+            self.canvas_frame, text="", font=ctk.CTkFont(size=28, weight="bold")
+        )
+        self.lbl_brand_display.grid(row=1, column=0, pady=(0, 20))
+
         # The CTk Dark mode background is roughly #242424
         self.clock_canvas = HighResClockCanvas(
             self.canvas_frame, 
             width=500, height=500, 
             bg="#242424"
         )
-        self.clock_canvas.place(relx=0.5, rely=0.5, anchor="center")
+        self.clock_canvas.grid(row=2, column=0)
+
+        # Digital Time Label
+        self.lbl_digital_time = ctk.CTkLabel(
+            self.canvas_frame, text="", font=ctk.CTkFont(family="Courier", size=36, weight="bold")
+        )
+        self.lbl_digital_time.grid(row=3, column=0, pady=(20, 0))
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Callbacks
@@ -116,16 +138,38 @@ class TickNodeApp(ctk.CTk):
         })
         self.clock.shift_time_zone(diff)
         self.current_zone = zone
+        self.virtual_datetime += timedelta(hours=diff)
 
     def handle_undo(self) -> None:
-        if not self.history.is_empty():
-            record = self.history.pop()
-            self.clock.shift_time_zone(-record["diff"])
-            self.current_zone = record["from"]
-            self.control_panel.set_active_zone(self.current_zone)
+        # Full Reset to real time as if restarting the program
+        self.clock = ClockManager()
+        
+        # Clear history stack
+        while not self.history.is_empty():
+            self.history.pop()
+            
+        # Reset Time Zone to local
+        self.current_zone = self.calc.get_local_zone_name()
+        if self.current_zone not in ALL_TIME_ZONES:
+            self.current_zone = ALL_TIME_ZONES[0]
+        self.control_panel.set_active_zone(self.current_zone)
+        
+        # Reset virtual datetime
+        self.virtual_datetime = self.calc.get_current_time(self.current_zone)
+        
+        # Turn off time machine UI
+        self.control_panel.switch_time_machine.deselect()
 
     def handle_time_machine(self) -> None:
         self.clock.toggle_time_machine()
+
+    def handle_theme_change(self, mode: str) -> None:
+        if mode == "Claro":
+            ctk.set_appearance_mode("light")
+            self.clock_canvas.configure(bg="#EBEBEB")
+        else:
+            ctk.set_appearance_mode("dark")
+            self.clock_canvas.configure(bg="#242424")
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Game Loops
@@ -134,6 +178,14 @@ class TickNodeApp(ctk.CTk):
     def auto_tick(self) -> None:
         """1 Hz logical tick for the backend lists."""
         self.clock.tick()
+        
+        # Update virtual datetime to track AM/PM accurately
+        state = self.clock.get_state()
+        if state["direction"] == "Forward":
+            self.virtual_datetime += timedelta(seconds=1)
+        else:
+            self.virtual_datetime -= timedelta(seconds=1)
+            
         self.last_tick_time = time.time()
         self.after(1000, self.auto_tick)
 
@@ -147,6 +199,21 @@ class TickNodeApp(ctk.CTk):
         fractional_second = min(1.0, elapsed)
         
         self.clock_canvas.render_clock(state, brand_config, fractional_second)
+        
+        # Update extra UI labels to accompany the clock
+        self.lbl_brand_display.configure(
+            text=brand_config["display_name"],
+            text_color=("gray10", "gray90")
+        )
+        
+        am_pm = self.virtual_datetime.strftime("%p")
+        time_str = f"{state['hours']:02d}:{state['minutes']:02d}:{state['seconds']:02d} {am_pm}"
+        if state["direction"] == "Backward":
+            time_str += " ⏪"
+        self.lbl_digital_time.configure(
+            text=time_str,
+            text_color=("gray10", "gray90")
+        )
         
         # ~60 FPS (1000ms / 60 ≈ 16ms)
         self.after(16, self.update_display)

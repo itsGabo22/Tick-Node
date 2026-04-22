@@ -47,6 +47,10 @@ class HighResClockCanvas(tk.Canvas):
         """
         self.delete("all")
         
+        # 0. Straps (Z-Index: below dial)
+        if "strap_type" in brand_config:
+            self._draw_straps(brand_config)
+            
         # 1. Dial Background and Bezel
         self.create_oval(
             self.cx - self.r, self.cy - self.r,
@@ -64,6 +68,81 @@ class HighResClockCanvas(tk.Canvas):
 
         # 4. Center Pinion
         self._draw_center_pinion(brand_config)
+
+    def _draw_straps(self, cfg: Dict[str, Any]) -> None:
+        """Draw dynamic watch straps beneath the main dial."""
+        strap_type = cfg.get("strap_type", "leather")
+        color = cfg.get("strap_color", "#3E2723")
+        
+        # Strap width and extension
+        s_width = self.r * 1.15
+        s_length = self.r * 1.5
+        
+        # Top strap polygon coordinates
+        top_pts = [
+            self.cx - s_width / 2, self.cy - self.r * 0.8,
+            self.cx + s_width / 2, self.cy - self.r * 0.8,
+            self.cx + s_width * 0.85 / 2, self.cy - self.r - s_length,
+            self.cx - s_width * 0.85 / 2, self.cy - self.r - s_length
+        ]
+        
+        # Bottom strap polygon coordinates
+        bot_pts = [
+            self.cx - s_width / 2, self.cy + self.r * 0.8,
+            self.cx + s_width / 2, self.cy + self.r * 0.8,
+            self.cx + s_width * 0.85 / 2, self.cy + self.r + s_length,
+            self.cx - s_width * 0.85 / 2, self.cy + self.r + s_length
+        ]
+        
+        # Base polygons
+        self.create_polygon(top_pts, fill=color, outline="#111111", width=2)
+        self.create_polygon(bot_pts, fill=color, outline="#111111", width=2)
+        
+        # Textures
+        if strap_type == "leather":
+            # Stitching (smaller dashed polygon inside)
+            stitch_offset = 8
+            top_stitch = [
+                top_pts[0] + stitch_offset, top_pts[1] - stitch_offset,
+                top_pts[2] - stitch_offset, top_pts[3] - stitch_offset,
+                top_pts[4] - stitch_offset, top_pts[5] + stitch_offset,
+                top_pts[6] + stitch_offset, top_pts[7] + stitch_offset
+            ]
+            bot_stitch = [
+                bot_pts[0] + stitch_offset, bot_pts[1] + stitch_offset,
+                bot_pts[2] - stitch_offset, bot_pts[3] + stitch_offset,
+                bot_pts[4] - stitch_offset, bot_pts[5] - stitch_offset,
+                bot_pts[6] + stitch_offset, bot_pts[7] - stitch_offset
+            ]
+            
+            stitch_color = "#E0D8C8" if "Patek" in cfg.get("display_name", "") else "#555555"
+            self.create_polygon(top_stitch, fill="", outline=stitch_color, dash=(4, 4), width=2)
+            self.create_polygon(bot_stitch, fill="", outline=stitch_color, dash=(4, 4), width=2)
+            
+        elif strap_type == "metal":
+            # Metal Links
+            link_count = 7
+            
+            # Top Links
+            for i in range(1, link_count):
+                frac = i / link_count
+                y_pos = (self.cy - self.r * 0.8) - frac * (self.r + s_length - self.r * 0.8)
+                current_w = s_width - frac * (s_width - s_width * 0.85)
+                self.create_line(self.cx - current_w / 2, y_pos, self.cx + current_w / 2, y_pos, fill="#333333", width=2)
+                
+            # Vertical splits for links
+            self.create_line(self.cx - s_width * 0.15, self.cy - self.r * 0.8, self.cx - s_width * 0.13, self.cy - self.r - s_length, fill="#333333", width=2)
+            self.create_line(self.cx + s_width * 0.15, self.cy - self.r * 0.8, self.cx + s_width * 0.13, self.cy - self.r - s_length, fill="#333333", width=2)
+
+            # Bottom Links
+            for i in range(1, link_count):
+                frac = i / link_count
+                y_pos = (self.cy + self.r * 0.8) + frac * (self.r + s_length - self.r * 0.8)
+                current_w = s_width - frac * (s_width - s_width * 0.85)
+                self.create_line(self.cx - current_w / 2, y_pos, self.cx + current_w / 2, y_pos, fill="#333333", width=2)
+
+            self.create_line(self.cx - s_width * 0.15, self.cy + self.r * 0.8, self.cx - s_width * 0.13, self.cy + self.r + s_length, fill="#333333", width=2)
+            self.create_line(self.cx + s_width * 0.15, self.cy + self.r * 0.8, self.cx + s_width * 0.13, self.cy + self.r + s_length, fill="#333333", width=2)
 
     def _angle_to_xy(self, angle_deg: float, radius: float) -> tuple[float, float]:
         """Convert clock angle (0=12) to canvas coordinates."""
