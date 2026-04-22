@@ -529,7 +529,7 @@ class TankFace(BaseWatchFace):
     def draw_straps(self, cfg: Dict[str, Any]) -> None:
         color = cfg.get("strap_color", "#1A1A1A")
         y_case = self.rect_h * 1.15
-        s_len = self.r * 1.5
+        s_len = self.r * 0.8  # Reduced so it looks like a strap, not a column
         
         self.canvas.create_rectangle(
             self.cx - self.rect_w * 0.85, self.cy - y_case - s_len, 
@@ -606,3 +606,13 @@ class TankFace(BaseWatchFace):
 
         draw_blued_sword(h * 30, self.rect_w * 0.65, 8)
         draw_blued_sword(m * 6, self.rect_h * 0.75, 6)
+        
+        # Second hand (thin blue needle)
+        rad_s = math.radians(s * 6 - 90)
+        sx = self.cx + self.rect_h * 0.85 * math.cos(rad_s)
+        sy = self.cy + self.rect_h * 0.85 * math.sin(rad_s)
+        self.canvas.create_line(self.cx, self.cy, sx, sy, fill="#00008B", width=2)
+        # Counterbalance
+        bx = self.cx - self.rect_h * 0.15 * math.cos(rad_s)
+        by = self.cy - self.rect_h * 0.15 * math.sin(rad_s)
+        self.canvas.create_line(self.cx, self.cy, bx, by, fill="#00008B", width=2)
