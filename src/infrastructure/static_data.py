@@ -37,82 +37,47 @@ WATCH_BRANDS: Dict[str, Dict[str, Any]] = {
 
     "rolex": {
         "display_name": "Rolex Submariner",
-        "dial_bg": "#0B1A2E",
-        "dial_border": "#C4A34D",
-        "marker_color": "#C4A34D",
-        "marker_style": "baton",
+        "dial_bg": "#181818",
+        "dial_border": "#000000",
         "strap_type": "metal",
-        "strap_color": "#B0C4DE",
-        "hand_hours": {"color": "#C4A34D", "width": 6},
-        "hand_minutes": {"color": "#C4A34D", "width": 4},
-        "hand_seconds": {"color": "#E8372A", "width": 1.5},
-        "center_dot": "#C4A34D",
-        "font_family": "Georgia, serif",
-        "accent": "#006039",
+        "strap_color": "#C0C0C0",
+        "face_strategy": "SubmarinerFace",
     },
 
     "patek_philippe": {
         "display_name": "Patek Philippe Calatrava",
-        "dial_bg": "#FAF6F0",
-        "dial_border": "#8B7355",
-        "marker_color": "#2C2C2C",
-        "marker_style": "roman",
+        "dial_bg": "#E9C2A6", # Salmon dial
+        "dial_border": "#E0E0E0",
         "strap_type": "leather",
-        "strap_color": "#3E2723",
-        "hand_hours": {"color": "#1A1A2E", "width": 5},
-        "hand_minutes": {"color": "#1A1A2E", "width": 3},
-        "hand_seconds": {"color": "#6B4C30", "width": 1},
-        "center_dot": "#1A1A2E",
-        "font_family": "'Playfair Display', serif",
-        "accent": "#8B7355",
+        "strap_color": "#4A3018", # Dark brown leather
+        "face_strategy": "CalatravaFace",
     },
 
     "audemars_piguet": {
         "display_name": "Audemars Piguet Royal Oak",
-        "dial_bg": "#1B2838",
-        "dial_border": "#A0A0A0",
-        "marker_color": "#FFFFFF",
-        "marker_style": "baton",
+        "dial_bg": "#E8E9EB", # White/Silver Tapisserie
+        "dial_border": "#B0B0B0",
         "strap_type": "metal",
-        "strap_color": "#A9A9A9",
-        "hand_hours": {"color": "#FFFFFF", "width": 6},
-        "hand_minutes": {"color": "#FFFFFF", "width": 4},
-        "hand_seconds": {"color": "#E8372A", "width": 1.5},
-        "center_dot": "#FFFFFF",
-        "font_family": "'Helvetica Neue', sans-serif",
-        "accent": "#4A90D9",
+        "strap_color": "#B0B0B0",
+        "face_strategy": "RoyalOakFace",
     },
 
     "omega": {
         "display_name": "Omega Speedmaster",
-        "dial_bg": "#1C1C1C",
-        "dial_border": "#D4D4D4",
-        "marker_color": "#F5F5DC",
-        "marker_style": "arabic",
+        "dial_bg": "#151515", # Matte Black
+        "dial_border": "#000000", # Black tachymeter insert
         "strap_type": "metal",
-        "strap_color": "#C0C0C0",
-        "hand_hours": {"color": "#F5F5DC", "width": 5},
-        "hand_minutes": {"color": "#F5F5DC", "width": 3},
-        "hand_seconds": {"color": "#FF6B35", "width": 1.5},
-        "center_dot": "#D4D4D4",
-        "font_family": "'Roboto', sans-serif",
-        "accent": "#FF6B35",
+        "strap_color": "#B8B8B8",
+        "face_strategy": "SpeedmasterFace",
     },
 
     "cartier": {
         "display_name": "Cartier Tank",
-        "dial_bg": "#FFFFF0",
-        "dial_border": "#B8860B",
-        "marker_color": "#1A1A2E",
-        "marker_style": "roman",
+        "dial_bg": "#F9F9F4", # Silver opaline
+        "dial_border": "#D8D8D8", # Steel/White Gold
         "strap_type": "leather",
-        "strap_color": "#1A1A1A",
-        "hand_hours": {"color": "#00008B", "width": 4},
-        "hand_minutes": {"color": "#00008B", "width": 2.5},
-        "hand_seconds": {"color": "#B8860B", "width": 1},
-        "center_dot": "#00008B",
-        "font_family": "'Garamond', serif",
-        "accent": "#B8860B",
+        "strap_color": "#151515", # Black leather
+        "face_strategy": "TankFace",
     },
 }
 
