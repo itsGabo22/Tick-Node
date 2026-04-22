@@ -236,17 +236,38 @@ class SubmarinerFace(BaseWatchFace):
         width = 12
         cos_a, sin_a = math.cos(rad), math.sin(rad)
         px, py = -sin_a * width/2, cos_a * width/2
-        base_len = length * 0.65
-        bx, by = self.cx + base_len * cos_a, self.cy + base_len * sin_a
-        self.canvas.create_polygon(self.cx+px, self.cy+py, bx+px, by+py, bx-px, by-py, self.cx-px, self.cy-py, fill="#FFFFFF", outline="#C0C0C0", width=2)
-        circle_r = width * 1.5
-        self.canvas.create_oval(bx+length*0.1-circle_r, by+length*0.1-circle_r, bx+length*0.1+circle_r, by+length*0.1+circle_r, outline="#C0C0C0", width=2, fill="#FFFFFF")
-        ccx, ccy = bx+length*0.1, by+length*0.1
-        self.canvas.create_line(ccx, ccy, ccx+circle_r*cos_a, ccy+circle_r*sin_a, fill="#C0C0C0", width=2)
-        self.canvas.create_line(ccx, ccy, ccx+circle_r*math.cos(rad+2.1), ccy+circle_r*math.sin(rad+2.1), fill="#C0C0C0", width=2)
-        self.canvas.create_line(ccx, ccy, ccx+circle_r*math.cos(rad-2.1), ccy+circle_r*math.sin(rad-2.1), fill="#C0C0C0", width=2)
-        tx, ty = self.cx + length * cos_a, self.cy + length * sin_a
-        self.canvas.create_polygon(bx+length*0.2+px, by+length*0.2+py, tx, ty, bx+length*0.2-px, by+length*0.2-py, fill="#FFFFFF", outline="#C0C0C0", width=2)
+        
+        # Main stem (from center to circle)
+        stem_end_len = length * 0.65
+        ex, ey = self.cx + stem_end_len * cos_a, self.cy + stem_end_len * sin_a
+        self.canvas.create_polygon(
+            self.cx+px, self.cy+py, ex+px, ey+py, ex-px, ey-py, self.cx-px, self.cy-py, 
+            fill="#FFFFFF", outline="#C0C0C0", width=2
+        )
+        
+        # Mercedes Circle
+        circle_center_len = length * 0.78
+        ccx, ccy = self.cx + circle_center_len * cos_a, self.cy + circle_center_len * sin_a
+        circle_r = width * 1.4
+        self.canvas.create_oval(
+            ccx-circle_r, ccy-circle_r, ccx+circle_r, ccy+circle_r, 
+            outline="#C0C0C0", width=2, fill="#FFFFFF"
+        )
+        
+        # Internal Mercedes Star (3 lines)
+        for angle_off in [0, 120, 240]:
+            l_rad = rad + math.radians(angle_off)
+            lx, ly = ccx + circle_r * math.cos(l_rad), ccy + circle_r * math.sin(l_rad)
+            self.canvas.create_line(ccx, ccy, lx, ly, fill="#C0C0C0", width=2)
+            
+        # Hand Tip (triangle beyond the circle)
+        tip_start_len = length * 0.92
+        tx, ty = self.cx + length * 1.15 * cos_a, self.cy + length * 1.15 * sin_a
+        sx, sy = self.cx + tip_start_len * cos_a, self.cy + tip_start_len * sin_a
+        self.canvas.create_polygon(
+            sx+px*0.6, sy+py*0.6, tx, ty, sx-px*0.6, sy-py*0.6, 
+            fill="#FFFFFF", outline="#C0C0C0", width=2
+        )
 
         # Minute Sword
         rad = math.radians(m * 6 - 90)

@@ -178,34 +178,29 @@ Cada item apilado: `{"from": "America/Bogota", "to": "Asia/Tokyo", "diff": 14}`
 
 ---
 
-## Fase 6: Refactor a Desktop App (CustomTkinter) ✅
+---
 
-> [!IMPORTANT]  
-> Debido a limitaciones de rendimiento y refresco en Streamlit para lograr una animación a 60 FPS fluida, se decidió hacer un refactor completo de la UI. El backend (Domain, Use Cases, Infrastructure) se mantuvo 100% INTACTO. Se rediseñó puramente la capa de Presentación para migrar de una Web App a una Desktop App nativa de alto rendimiento.
+## Fase 6: Ambientación Dinámica e Inmersión (Final Polish) ✅
 
-### Archivos implementados
+### Archivos actualizados
 
-#### [clock_canvas.py](file:///c:/Users/Gabriel/Desktop/Tareas/EstructurasDatos/TickNode/tick_node_app/src/ui/clock_canvas.py) — Render Engine
+#### [clock_canvas.py](file:///c:/Users/Gabriel/Desktop/Tareas/EstructurasDatos/TickNode/tick_node_app/src/ui/clock_canvas.py) — El "Motor de Renderizado"
+Se implementó un sistema de renderizado procedural que va más allá de un simple reloj:
+- **Cielo Dinámico (Sky Engine)**: El fondo del Canvas ya no es estático. Dibuja dinámicamente 5 estados del día basados en la hora virtual:
+  - **Madrugada (0-5h)**: Cielo estrellado con luna creciente.
+  - **Mañana (6-11h)**: Gradientes celestes a melocotón con montañas vectoriales y sol naciente.
+  - **Día (12-16h)**: Praderas verdes, nubes esponjosas y sol en el cenit.
+  - **Ocaso (17-19h)**: Paisaje dramático con montañas en silueta y gradientes de fuego (naranja/púrpura).
+  - **Noche (20-23h)**: Cielo profundo con estrellas aleatorias (sembradas por la hora).
+- **Legibilidad Inteligente (Drop Shadows)**: Los textos (Marca, Hora Digital, Itinerario) se dibujan con sombras paralelas que cambian de color automáticamente según el brillo del fondo para garantizar visibilidad total.
+- **Estrategias de Relojes de Lujo (watch_faces.py)**: Cada marca tiene su propia geometría:
+  - **Rolex Submariner**: Aguja "Mercedes" corregida matemáticamente para rotación perfecta.
+  - **Cartier Tank**: Caja rectangular con "chemin de fer" (vía de tren) y aguja azulada de espada (minimalista, sin segundero originalmente, pero activable).
+  - **Patek / Omega / Audemars**: Detalles en sub-esferas y biseles octogonales (Royal Oak).
 
-**Clase `HighResClockCanvas`** — Reemplaza el anterior `watch_faces.py` (Plotly).
-- **Trigonometría Avanzada**: Uso intensivo de `math.cos` y `math.sin` para posicionar marcadores y manecillas.
-- **Smooth Sweep a 60 FPS**: Calcula ángulos fraccionales interpolando milisegundos (`frac_sec`) para evitar el "salto" clásico de los segundos.
-- **Diseños de Lujo en Polígonos**: Renderiza manecillas complejas ("Mercedes" con el círculo perforado y "Sword" tipo diamante) usando `create_polygon`.
-
-#### [control_panel.py](file:///c:/Users/Gabriel/Desktop/Tareas/EstructurasDatos/TickNode/tick_node_app/src/ui/control_panel.py) — El Sidebar Moderno
-
-**Clase `ControlPanel`** — Hereda de `CTkFrame`.
-- UI minimalista con bordes redondeados (`customtkinter`).
-- Textos estrictamente en **Español** para la interacción de usuario.
-- Contiene `CTkOptionMenu`, `CTkButton` y `CTkSwitch` atados a callbacks puros.
-
-#### [app.py](file:///c:/Users/Gabriel/Desktop/Tareas/EstructurasDatos/TickNode/tick_node_app/app.py) — The Game Loop
-
-**Clase `TickNodeApp`** — Punto de entrada de la aplicación.
-- Configura el tema oscuro (`set_appearance_mode("dark")`).
-- **Arquitectura de Game Loop**:
-  - `auto_tick()`: Bucle asíncrono (`self.after(1000)`) que llama al backend (`clock.tick()`) exactamente una vez por segundo.
-  - `update_display()`: Bucle asíncrono (`self.after(16)`) que actualiza el canvas a **60 Fotogramas Por Segundo**, pasando la interpolación de tiempo para animar fluidamente las manecillas.
+#### [app.py](file:///c:/Users/Gabriel/Desktop/Tareas/EstructurasDatos\TickNode\tick_node_app\app.py) — Integración de Capas
+- **Escalado Inteligente**: El reloj se ajusta al tamaño de la ventana pero mantiene un límite de zoom para no tapar los paisajes de fondo.
+- **Desacoplamiento de UI**: La información digital (itinerario con banderas emoji 🇮🇹🇺🇸) se posiciona en los bordes para dejar el centro libre para la pieza de joyería analógica.
 
 ---
 
@@ -213,32 +208,32 @@ Cada item apilado: `{"from": "America/Bogota", "to": "Asia/Tokyo", "diff": 14}`
 
 ```mermaid
 graph TB
-    subgraph "Capa de Dominio (Intacta)"
+    subgraph "Capa de Dominio (Estructuras)"
         N["Node"]
-        CDLL["CircularDoublyLinkedList"]
+        CDLL["CircularDoublyLinkedList (Anillos de Tiempo)"]
     end
-    subgraph "Capa de Infraestructura (Intacta)"
-        SD["static_data.py"]
-        TS["time_service.py"]
+    subgraph "Capa de Infraestructura (Datos)"
+        SD["static_data.py (Zonas, Banderas, Marcas)"]
+        TS["time_service.py (Cálculos de Delta)"]
     end
-    subgraph "Capa de Casos de Uso (Intacta)"
-        ST["strategies.py"]
-        CM["clock_manager.py"]
-        HS["history.py"]
+    subgraph "Capa de Casos de Uso (Lógica)"
+        ST["strategies.py (Forward/Backward)"]
+        CM["clock_manager.py (El Motor del Tiempo)"]
+        HS["history.py (Pila de Viajes - LIFO)"]
     end
-    subgraph "Capa de UI (Fase 6 Desktop)"
-        CC["clock_canvas.py<br/>HighResClockCanvas (Trigonometría)"]
-        CP["control_panel.py<br/>ControlPanel (CTkFrame)"]
-        APP["app.py<br/>Game Loops (60FPS / 1Hz)"]
+    subgraph "Capa de UI (Presentación 60FPS)"
+        CC["clock_canvas.py<br/>HighResClockCanvas (Sky Engine)"]
+        WF["watch_faces.py<br/>Estrategias de Dibujo (Rolex, Cartier...)"]
+        CP["control_panel.py<br/>Sidebar CTk"]
+        APP["app.py<br/>Game Loop & Sincronización"]
     end
 
-    N --> CDLL
     CDLL --> CM
     ST --> CM
     TS --> CM
-    SD --> CC
     CM --> APP
     HS --> APP
+    WF --> CC
     CC --> APP
     CP --> APP
 ```
