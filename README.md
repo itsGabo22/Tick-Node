@@ -57,4 +57,4 @@ He preparado una documentación paso a paso de cómo fui construyendo cada parte
 👉 **[Ver Mi Walkthrough de Implementación](./docs/walkthrough.md)**
 
 ---
-*Entregable para el Taller de Desarrollo de Relojes - Fecha de entrega: 28 de Abril.*
+*Entregable para el Taller de listas circulares dobles- Fecha de entrega: 28 de Abril.*
